@@ -309,7 +309,6 @@ import org.apache.ibatis.annotations.Mapper;
 import org.springframework.stereotype.Repository;
 
 @Mapper
-@Repository
 public interface DemoMapper {
     DemoEntity selectById(String id);
 }
@@ -329,6 +328,41 @@ public interface DemoMapper {
     </resultMap>
 </mapper>
 
+```
+
+#### select
+
+```xml
+ <!--查询单个-->
+    <select id="queryById" resultMap="DemoMap">
+        select pk_id,
+               name,
+               age,
+               sex,
+               hobby
+        from demo.demo
+        where pk_id = #{pkId,jdbcType=INTEGER}
+    </select>
+<!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="DemoMap">
+        select pk_id, 
+               name, 
+               age, 
+               sex,
+               hobby
+        from demo.demo
+        <where>
+            <if test="pkId != null">
+                and pk_id = #{pkId}
+            </if>
+            <if test="name != null and name != ''"> <!--不能为空串-->
+                and name LIKE #{name}'%'<!--模糊查询-->
+            </if>
+            <if test="age != null">
+                and age = #{age}
+            </if>
+        </where>
+    </select>
 ```
 
 #### insert
@@ -426,40 +460,7 @@ public interface DemoMapper {
 </delete>
 ```
 
-#### select
 
-```xml
- <!--查询单个-->
-    <select id="queryById" resultMap="DemoMap">
-        select pk_id,
-               name,
-               age,
-               sex,
-               hobby
-        from demo.demo
-        where pk_id = #{pkId,jdbcType=INTEGER}
-    </select>
-<!--通过实体作为筛选条件查询-->
-    <select id="queryAll" resultMap="DemoMap">
-        select pk_id, 
-               name, 
-               age, 
-               sex,
-               hobby
-        from demo.demo
-        <where>
-            <if test="pkId != null">
-                and pk_id = #{pkId}
-            </if>
-            <if test="name != null and name != ''"> <!--不能为空串-->
-                and name LIKE #{name}'%'<!--模糊查询-->
-            </if>
-            <if test="age != null">
-                and age = #{age}
-            </if>
-        </where>
-    </select>
-```
 
 ### 分页
 
@@ -491,130 +492,6 @@ pagehelper.params=count=countSql
 ```
 
 
-
-## jpa
-
-### pom
-
-```xml
-<!--jpa-->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-data-jpa</artifactId>
-</dependency>
-```
-
-### yml
-
-```yaml
- show-sql:  true
-      hibernate:
-        #自动创建、更新、校验数据库表结构配置
-        ddl-auto: validate
-```
-
-### entity
-
-```java
-package com.example.index.project.entity;
-
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
-@Entity
-@Table(name = "user")
-@NoArgsConstructor
-@Setter
-@Getter
-public class UserEntity {
-    @Id
-    private String id;
-    @Column(name = "user_name")
-    private String username;
-    @Column(name = "pass_word")
-    private String password;
-}
-
-```
-
-### mapper
-
-```java
-// mapper接口
-public interface UserMapper extends JpaRepository<User, String> {
-}
-```
-
-### sevice
-
-```java
-// service接口
-public interface UserService {
-   Optional<UserEntity> findById(String id);
-}
-```
-
-### serviceImpl
-
-```java
-package com.example.index.project.service.impl;
-
-import com.example.index.project.entity.UserEntity;
-import com.example.index.project.mapper.UserMapper;
-import com.example.index.project.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Optional;
-
-@Service
-public class UserServiceImpl implements UserService {
-    private UserMapper userMapper;
-
-    @Autowired
-    public UserServiceImpl(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
-
-    @Override
-    public Optional<UserEntity> findById(String id) {
-        return userMapper.findById(id);
-    }
-}
-
-```
-
-### controller
-
-```java
-// 控制层
-@RestController
-public class UserController {
-    private UserService userService;
-    @Autowired
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-    @GetMapping("/one")
-    public User findById() {
-        return userService.findById("123");
-    }
-   @GetMapping("/all")
-    public Page<User> findAll() {
-        Pageable pageable = PageRequest.of(0, 10);//分页查询
-       // 使用Sort排序
-       // Pageable pageable = PageRequest.of(0, 10, Sort.Direction.DESC, "passWord");
-        return userService.findAll(pageable);
-    }
-}
-```
 
 # 全局异常
 
