@@ -55,3 +55,40 @@ int main()
    cout << "Hello, world!" << endl;
    return 0;
 }
+/////////////////////////////
+#include <string.h>
+#include <vector>
+#include <iostream>
+using namespace std;
+ 
+int main()
+{
+    vector<int>obj;//创建一个向量存储容器 int
+    for(int i=0;i<10;i++) // push_back(elem)在数组最后添加数据 
+    {
+        obj.push_back(i);
+        cout<<obj[i]<<",";    
+    }
+    cout<<obj.at(1)<<",";
+    return 0;
+}
+/////////////////////////////////
+void Teacher::sorts(){
+    vector<Student> va;
+    Student stu;
+    fstream file("student.txt", ios::binary | ios::in);//打开文件存取学生对象的文件
+    while(!file.eof())
+    {
+        file.read((char *)&stu, sizeof(Student));//读取文件
+        va.push_back(stu);//将学生对象存入容器
+    }
+        va.pop_back();
+     sort(va.begin(),va.end(),myCompare);//使用sort进行排序
+     fstream file1("student.txt", ios::out | ios::trunc);
+    for (int i=0;i<va.size();i++)
+    {
+        file1.write((char *)&va[i], sizeof(Student));//将排序好的写入文件
+    }
+    file.close();//关闭文件
+    file1.close();
+}
