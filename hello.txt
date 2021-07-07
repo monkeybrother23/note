@@ -94,47 +94,47 @@ void Teacher::sorts(){
 }
 ///////////
 #include <iostream>
+#include <string>
 using namespace std;
-// 基类
-class Shape 
+// 用户类
+class User 
 {
    public:
-      void setWidth(int w)
+      void setUserId(string id)
       {
-         width = w;
+         userId = id;
       }
-	  int getWidth(void){
-	   return width;
+	  string getUserId(void){
+	   return userId;
 	  }
-      void setHeight(int h)
+      void setUserName(string name)
       {
-         height = h;
+         userName = name;
       }
-	  int getHeight(void){
-	   return height;
+	  string getUserName(void){
+	   return userName;
 	  }
    private:
-      int width;
-      int height;
+      string userId;
+      string userName;
 };
 // 派生类
-class Rectangle: public Shape
+class Reader: public User
 {
    public:
-      int getArea()
+      void getArea()
       { 
-         return (getWidth() * getHeight()); 
+          cout << "getUserId : " << getUserId() << endl;
+		  cout << "getUserName: " << getUserName() << endl;
       }
 };
 int main(void)
 {
-   Rectangle Rect;
- 
-   Rect.setWidth(5);
-   Rect.setHeight(7);
- 
-   // 输出对象的面积
-   cout << "Total area: " << Rect.getArea() << endl;
- 
+   Reader reader;
+   string id = "123";
+   string name = "ben";
+   reader.setUserId(id);
+   reader.setUserName(name);
+  reader.getArea();
    return 0;
 }
