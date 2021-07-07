@@ -138,3 +138,15 @@ int main(void)
   reader.getArea();
    return 0;
 }
+///////////////////
+  string id = "123";
+   string name = "ben";
+   string name2 = "ben";
+   if (0 == id.compare(name))
+    {
+        cout << "1 ==" << endl;
+    }
+   if (0 == name2.compare(name))
+    {
+        cout << "2 ==" << endl;
+    }
