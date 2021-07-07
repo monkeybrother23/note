@@ -1,0 +1,57 @@
+#include <iostream>
+using namespace std;
+class Box
+{
+   public:
+      double length;   // 长度
+      double breadth;  // 宽度
+      double height;   // 高度
+      // 成员函数声明
+      double get(void);
+      void set( double len, double bre, double hei );
+};
+// 成员函数定义
+double Box::get(void)
+{
+    return length * breadth * height;
+}
+ 
+void Box::set( double len, double bre, double hei)
+{
+    length = len;
+    breadth = bre;
+    height = hei;
+}
+int sum(int a, int b=20)
+{
+  int result;
+ 
+  result = a + b;
+  
+  return (result);
+}
+int main()
+{
+	Box Box1;        // 声明 Box1，类型为 Box
+   double volume = 0.0;     // 用于存储体积
+   // box 1 详述
+   Box1.height = 5.0; 
+   Box1.length = 6.0; 
+   Box1.breadth = 7.0;
+	// box 1 的体积
+   volume = Box1.height * Box1.length * Box1.breadth;
+   cout << "Box1 的体积：" << volume <<endl;
+	Box n[ 10 ];
+	n[0]=Box1;
+	cout << n[0].height << endl;
+	
+	// 局部变量声明
+   int a = 100;
+   int b = 200;
+   int result;
+	 // 再次调用函数
+   result = sum(a);
+   cout << "Total value is :" << result << endl;
+   cout << "Hello, world!" << endl;
+   return 0;
+}
