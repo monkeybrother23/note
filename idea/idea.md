@@ -40,5 +40,4 @@
 ## Maven
 
 ### ssl
-
-![1624077867136](C:\Users\Albert\Desktop\note\idea\img\maven-ssl.png)
+<img src="./img/maven-ssl.png"/>
