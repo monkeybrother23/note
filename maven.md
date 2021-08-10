@@ -1,14 +1,14 @@
 ## 配置
 
-### settings
+### maven/conf/settings
 
-#### 存储路径
+#### localRepository
 
 ```xml
 <localRepository>E:\repository\albert</localRepository>
 ```
 
-#### 仓库
+#### mirror
 
 ```xml
 <mirror>
