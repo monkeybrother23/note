@@ -217,69 +217,6 @@ public String toEditPage(@PathVariable("id") String id, Model model) {
 
 # 持久层
 
-## druid
-
-### pom
-
-```xml
-<!--mysql数据库-->
- <dependency>
-    <groupId>mysql</groupId>
-    <artifactId>mysql-connector-java</artifactId>
-</dependency> 
-<!--druid-->
-<dependency>
-   <groupId>com.alibaba</groupId>
-   <artifactId>druid-spring-boot-starter</artifactId>
-   <version>1.1.20</version>
-</dependency>
-```
-
-### application
-
-```yaml
-spring:
-  datasource:
-    type: com.alibaba.druid.pool.DruidDataSource
-    driver-class-name: com.mysql.jdbc.Driver
-    username: root
-    password: 123456
-    url: jdbc:mysql://127.0.0.1:3306/test?serverTimezone=Asia/Shanghai
-    druid:
-      initial-size: 5
-      max-active: 20
-      min-idle: 5
-      #获取连接等待超时时间
-      max-wait: 60000
-      #间隔多久进行一次检测，检测需要关闭的空闲连接
-      time-between-eviction-runs-millis: 60000
-      #一个连接在池中最小生存的时间
-      min-evictable-idle-time-millis: 30000
-      validation-query: SELECT 'x'
-      test-while-idle: true
-      test-on-borrow: false
-      test-on-return: false
-      #打开PSCache，并指定每个连接上PSCache的大小。oracle设为true，mysql设为false。分库分表较多推荐设置为false
-      pool-prepared-statements: false
-      max-pool-prepared-statement-per-connection-size: 20
-      #配置监控统计拦截的filters,去掉后监控界面sql将无法统计
-      filters: stat,wall,slf4j
-      web-stat-filter:
-        enabled: true
-        url-pattern: "/*"
-        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
-        session-stat-max-count: 1000
-        session-stat-enable: true
-        profile-enable: true
-      stat-view-servlet:
-        enabled: true
-        url-pattern: "/druid/*"
-        login-username: root
-        login-password: 123456
-        allow: 127.0.0.1
-        reset-enable: true
-```
-
 ## mybatis
 
 ### pom
@@ -597,71 +534,25 @@ public class GlobalDefaultExceptionHandler {
 
 # 文件操作
 
-```java
- /**
-     * cuihao
-     * @param contentType excel类型的application
-     * @param byteArrayOutputStream 文件流
-     * @param response HttpServletResponse
-     * @param returnName 返回的文件名
-     */
-    public static void download(String contentType, String returnName, ByteArrayOutputStream byteArrayOutputStream, HttpServletResponse response) throws IOException {
-        response.setContentType(contentType);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        //保存的文件名,必须和页面编码一致,否则乱码
-        returnName = response.encodeURL(new String(returnName.getBytes(), StandardCharsets.ISO_8859_1));
-        response.addHeader("Content-Disposition", "attachment;filename=" + returnName);
-        response.setContentLength(byteArrayOutputStream.size());
-        //取得输出流
-        ServletOutputStream outputStream = response.getOutputStream();
-        //写到输出流
-        byteArrayOutputStream.writeTo(outputStream);
-        //关闭
-        byteArrayOutputStream.close();
-        //刷数据
-        outputStream.flush();
-    }
-```
-
 ## 文件下载
 
 ```java
-@GetMapping("demoImport")
+    @GetMapping("demoImport")
     public void demoImport(HttpServletResponse response) {
-        ServletOutputStream outputStream = null;
-        InputStream inputStream = null;
-        try {
-            response.setHeader("content-Type", "application/vnd.ms-excel");
+        try (ServletOutputStream outputStream = response.getOutputStream();
+             InputStream inputStream = getClass().getResourceAsStream("/excel/kqmb.xls");) {
+            response.setHeader("content-Type", " application/vnd.ms-excel");
             // 下载文件的默认名称
-            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("kqmb.xlsx", "utf-8"));
-            inputStream = getClass().getResourceAsStream("/excel/kqmb.xlsx");
-            outputStream = response.getOutputStream();
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("kqmb.xls", "utf-8"));
             byte[] b = new byte[1024];
             int ln = 0;
-            while((ln = inputStream.read(b)) != -1){
-                outputStream.write(b,0,ln);
+            while ((ln = inputStream.read(b)) != -1) {
+                outputStream.write(b, 0, ln);
             }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }finally {
-            try {
-                if (outputStream != null){
-                    outputStream.close();
-                }
-
-                if (inputStream != null){
-                    inputStream.close();
-                }
-            }catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
         }
     }
-
 ```
 
 ## 文件上传
@@ -765,15 +656,17 @@ function exportData() {
 ```
 
 ```java
-@PostMapping("exportData")
-    public void exportData(@RequestParam HashMap param, HttpServletResponse response) {
-        try {
-            String aac001s = param.get("aac001s").toString();
-            List<HashMap> list = this.YhkqManageReadService.exportData(aac001s);
-            //1.创建Excel对象
-            XSSFWorkbook wb = new XSSFWorkbook();
+ @PostMapping("exportData")
+    public void exportData(@RequestParam String param, HttpServletResponse response) {
+        //1.创建Excel对象
+        //Excel2003  .xls HSSFWorkbook
+        //Excel2007 .xlsx XSSFWorkbook
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ServletOutputStream outputStream = response.getOutputStream();) {
+            //导出数据
+            List<HashMap> list = new ArrayList<>();
             //2.创建Sheet对象
-            Sheet sheet = wb.createSheet();
+            Sheet sheet = workbook.createSheet();
             //3.定义一些可复用的对象
             int rowIndex = 0;//行的索引
             int cellIndex = 1;//单元格的索引
@@ -813,7 +706,7 @@ function exportData() {
             //13.获取要生成的数据（数据库内的用户数据）
             for (HashMap map : list) {
                 nRow = sheet.createRow(rowIndex++);
-                cellIndex=1;
+                cellIndex = 1;
                 nCell = nRow.createCell(cellIndex++);
                 nCell.setCellValue(map.getOrDefault("AAC003", "").toString());
                 nCell = nRow.createCell(cellIndex++);
@@ -829,74 +722,21 @@ function exportData() {
                 nCell = nRow.createCell(cellIndex);
                 nCell.setCellValue(map.getOrDefault("KQSJD", "").toString());
             }
-            wb.setSheetName(0, "测试");
-            //最后，下载新增用户表文件，字节数组的输出流，它可存可取，带缓冲区
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            wb.write(byteArrayOutputStream);
-            String contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            FileUtil.download(contentType, bigTitle + ".xlsx", byteArrayOutputStream, response);
-            wb.close();
-        } catch (AppException | IOException e) {
-            e.getMessage();
+            workbook.setSheetName(0, "测试");
+
+            response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            //保存的文件名,必须和页面编码一致,否则乱码
+            String returnName = response.encodeURL(new String("文件导出".concat(".xlsx").getBytes(), StandardCharsets.ISO_8859_1));
+            response.addHeader("Content-Disposition", "attachment;filename=" + returnName);
+
+            //workbook将Excel写入到response的输出流中，供页面下载
+            workbook.write(outputStream);
+            outputStream.flush();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
         }
     }
-```
-
-## pdf预览
-
-```java
- public static void  showContract(HttpServletResponse response, String contractId){
-        response.setContentType("application/pdf");
-        try (ServletOutputStream outputStream = response.getOutputStream();) {
-            FDDSDKClient server = new FDDSDKClient(new JyStorageServiceImpl());
-            ContractDownloadRequest d = new ContractDownloadRequest();
-            d.setContractId(contractId);
-            ContractDownloadResponse res = server.contractDownload(d);
-            byte[] bytes = res.getContent();
-            outputStream.write(bytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-```
-
-```js
-//预览
-function showContract() {
-		$("#iframe").attr("src", "");
-		$("#iframe").off("load");
-		var contractId = "nmgbzj233"
-		var xhr = new XMLHttpRequest();
-		xhr.open("get", "http://127.0.0.1:9090/dfmsys/employmentInformation/contractRegistration/showContract?contractId=" + contractId, true);
-		//设置响应类型为blob类型
-		xhr.responseType = "blob";
-		xhr.onload = function () {
-			if (this.status == "200") {
-				var blob = this.response;
-				$("#iframe").attr("src", URL.createObjectURL(blob));
-			}
-		}
-		xhr.send();
-	}
-
-//直接打印
-function doPrint() {
-		var contractId = "nmgbzj233"
-		var xhr = new XMLHttpRequest();
-		xhr.open("get", "http://127.0.0.1:9090/dfmsys/employmentInformation/contractRegistration/showContract?contractId=" + contractId, true);
-		//设置响应类型为blob类型
-		xhr.responseType = "blob";
-		xhr.onload = function () {
-			if (this.status == "200") {
-				var blob = this.response;
-				$("#iframe").attr("src", URL.createObjectURL(blob));
-				$("#iframe").load(function () {//等待iframe加载完成后再执行doPrint.每次iframe设置src之后都会重新执行这部分代码。
-					document.getElementById("iframe").contentWindow.print();
-				});
-			}
-		}
-		xhr.send();
-	}
 ```
 
 # 消息中间件
