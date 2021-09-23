@@ -1,16 +1,28 @@
-# 基本语法
-
 ## 安装
 
 ```shell
 # 检查内核版本，必须是3.10及以上
 uname -r
+# 安装依赖包
+yum install -y yum-utils \
+               device-mapper-persistent-data \
+               lvm2
+# 配置docker仓库
+yum-config-manager --add-repo \
+    http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+#
+yum list docker-ce --showduplicates | sort -r
 # 安装docker
+yum install docker-ce-17.12.0.ce
 yum install docker
+
 # 查看
 docker -v
+docker versionordocker info
 # 启动docker
 systemctl start docker
+# 设置开机启动docker服务
+systemctl enable docker
 # 停止docker
 systemctl stop docker
 ```
@@ -18,10 +30,23 @@ systemctl stop docker
 ## 卸载
 
 ```shell
-systemctl stop docker
 systemctl diable docker
-yum remove docker-ce
+systemctl stop docker
+
+yum list installed | grep docker
+# 删除相关安装包
+yum -y remove docker-ce.x86_64
+yum -y remove docker-ce-selinux.noarch
+# 删除相关的镜像与容器
 rm -rf /var/lib/docke
+```
+
+## 简单使用
+
+```shell
+docker pull library/hello-world
+docker images
+docker run hello-world
 ```
 
 ## 镜像
@@ -155,5 +180,38 @@ postgres=# grant all on database test_db to test_user;
 postgres=# revoke all on database test_db from test_user;
 postgres=# drop role test_user;
 postgres=# drop database test_db
+
+
+regexp_replace(trim(to_char(a.mark_no, '999D99')) ,'(?<=\.\d*)0+$|\.0*$','')
+
+
+-- DROP TABLE cp20.cp_cur_cay_sch_asmt_frame_dtls;
+
+CREATE TABLE cp20.cp_cur_cay_sch_asmt_frame_dtls (
+	id bpchar(32) NOT NULL,
+	framework_sys_code varchar(14) NOT NULL,
+	tier_id varchar(3) NOT NULL,
+	item_id varchar(10) NOT NULL,
+	item_name varchar(30) NULL,
+	term_id varchar(30) NULL,
+	parent_item_id varchar(10) NULL,
+	version_no int4 NOT NULL,
+	created_ts timestamp NOT NULL,
+	created_by varchar(14) NOT NULL,
+	updated_ts timestamp NOT NULL,
+	updated_by varchar(14) NOT NULL,
+	delete_ind varchar(1) NOT NULL DEFAULT 'N'::character varying,
+	order_no int2 NOT NULL,
+	assessment_type varchar(10) NULL,
+	percent_no numeric(5,2) NULL,
+	tier2_mg_display_ind varchar(1) NULL,
+	CONSTRAINT pk_cp_cay_sch_asmt_frame_dtls PRIMARY KEY (id),
+	CONSTRAINT fk_cp_cay_sch_asmt_frame_dtls FOREIGN KEY (framework_sys_code) REFERENCES cp20.cp_cur_cay_sch_asmt_frame(framework_sys_code)
+);
+CREATE UNIQUE INDEX uq_cp_cay_sch_asmt_frame_dtls ON cp20.cp_cur_cay_sch_asmt_frame_dtls USING btree (framework_sys_code, tier_id, item_id, (
+CASE
+    WHEN ((delete_ind)::text = 'N'::text) THEN '1'::bpchar
+    ELSE id
+END));
 ```
 
