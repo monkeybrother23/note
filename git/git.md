@@ -16,6 +16,9 @@ git config --list
 # 设置提交代码时的用户信息
 git config [--global] user.name "[name]"
 git config [--global] user.email "[email address]"
+
+git config --global user.name Albert
+git config --global user.email monkeybrother23@gmail.com
 ```
 ### 增加/删除
 ```shell
