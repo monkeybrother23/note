@@ -350,5 +350,16 @@ select name,score,
 
 --rank over(partition by course order by score desc nulls last)
 ```
-
-
+UPDATE
+    table_name a
+SET
+    a_name = r.map_value
+FROM
+    (
+    SELECT
+        map_key,
+        map_value
+    FROM
+        table_name a) r
+WHERE
+    a.a_key = r.map_key
