@@ -1,6 +1,6 @@
-### 环境搭建
+## 环境搭建
 
-#### registry
+### registry
 
 ```shell
 临时
@@ -9,15 +9,44 @@
 npm config set registry https://registry.npm.taobao.org
 ```
 
-#### create
+### list
 
 ```shell
-npx create-react-app react-demo --template typescript
+npm list -g --depth 0
 ```
 
-#### antd
+### uninstall
 
-```bash
-npm install antd --save
+```shell
+npm uninstall -g create-react-app 
+npm cache clean --force
+npm cache verify
+npx clear-npx-cache以清除npx缓存。
 ```
+
+### yarn
+
+```shell
+yarn cache clean
+yarn start
+```
+
+### rimraf
+
+```
+npm install rimraf -g
+rimraf node_modules
+```
+
+
+
+### create
+
+```shell
+yarn config set registry https://registry.npm.taobao.org -g
+yarn create react-app react-demo
+yarn add antd
+```
+
+
 
