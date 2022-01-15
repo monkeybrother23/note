@@ -44,8 +44,9 @@ rimraf node_modules
 
 ```shell
 yarn config set registry https://registry.npm.taobao.org -g
-yarn create react-app react-demo
-yarn add antd
+yarn create react-app react-demo-ts --template typescript
+yarn add antd@4
+yarn add antd@4.18.3
 ```
 
 
