@@ -1,30 +1,72 @@
-## 安装
+# 安装
+
+## 检查内核
 
 ```shell
 # 检查内核版本，必须是3.10及以上
 uname -r
+```
+
+## remove
+
+```shell
+yum remove docker \
+           docker-client \
+           docker-client-lastest \
+           docker-common \
+           docker-latest \
+           docker-laster-logrotate \
+           docker-logrotate \
+           docker-engine
+```
+
+## yum
+
+```shell
 # 安装依赖包
 yum install -y yum-utils \
                device-mapper-persistent-data \
                lvm2
+```
+
+## config
+
+```shell
 # 配置docker仓库
 yum-config-manager --add-repo \
     http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+```
+
+## install
+
+```shell
 #
 yum list docker-ce --showduplicates | sort -r
 # 安装docker
 yum install docker-ce-17.12.0.ce
-yum install docker
+yum install docker-ce docker-ce-cli contained.io
+```
 
-# 查看
-docker -v
-docker versionordocker info
+## start
+
+```shell
 # 启动docker
 systemctl start docker
 # 设置开机启动docker服务
 systemctl enable docker
 # 停止docker
 systemctl stop docker
+```
+
+## info
+
+```shell
+# 查看
+docker -v
+
+docker pull library/hello-world
+docker images
+docker run hello-world
 ```
 
 ## 卸载
@@ -41,30 +83,48 @@ yum -y remove docker-ce-selinux.noarch
 rm -rf /var/lib/docke
 ```
 
-## 简单使用
+# 镜像
 
-```shell
-docker pull library/hello-world
-docker images
-docker run hello-world
-```
-
-## 镜像
+## search
 
 ```shell
 # 搜索镜像
 docker search elasticsearch
+```
+
+## pull
+
+```shell
 # 下载镜像
-docker pull ubuntu:13.10
+# docker pull [options] NAME[:TAG]
+  docker pull ubuntu:13.10
+```
+
+## images
+
+```shell
 # 查看镜像
-docker images 
+# docker images [options] [REPOSITORY[:TAG]]
+  docker images 
+```
+
+## run
+
+```shell
+# docker run [options] IMAGE[:TAG] [COMMAND] [ARG..]
+  docker run hello-world
+```
+
+## rmi
+
+```shell
 # 删除镜像
 docker rmi d23bdf5b1b1b
 # 删除所有镜像
 docker rmi $(docker images -q) 
 ```
 
-## 容器
+# 容器
 
 ```shell
 # 删除容器
@@ -83,7 +143,7 @@ docker start mysql01
 docker exec -it mysql01 bash
 ```
 
-## 日志
+# 日志
 
 ```shell
 # 实时查看docker容器日志
@@ -213,5 +273,54 @@ CASE
     WHEN ((delete_ind)::text = 'N'::text) THEN '1'::bpchar
     ELSE id
 END));
+```
+
+# 部署
+
+## java
+
+```shell
+docker search java8
+docker plull williamyeh/java8
+```
+
+## Dockerfile
+
+```shell
+# Docker image for springboot file run
+# VERSION 0.0.1
+# Author: eangulee
+# 基础镜像使用java
+FROM java:8
+# 作者
+MAINTAINER eangulee <eangulee@gmail.com>
+# VOLUME 指定了临时文件目录为/tmp。
+# 其效果是在主机 /var/lib/docker 目录下创建了一个临时文件，并链接到容器的/tmp
+VOLUME /tmp 
+# 将jar包添加到容器中并更名为app.jar
+ADD demo-0.0.1-SNAPSHOT.jar app.jar 
+# 运行jar包
+RUN bash -c 'touch /app.jar'
+ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+
+
+# VOLUME 指定了临时文件目录为/tmp。其效果是在主机 /var/lib/docker 目录下创建了一个临时文件，并链接到容器的/tmp。该步骤是可选的，如果涉及到文件系统的应用就很有必要了。/tmp目录用来持久化到 Docker 数据文件夹，因为 Spring Boot 使用的内嵌 Tomcat 容器默认使用/tmp作为工作目录
+#项目的 jar 文件作为 “app.jar” 添加到容器的
+#ENTRYPOINT 执行项目 app.jar。为了缩短 Tomcat 启动时间，添加一个系统属性指向 “/dev/./urandom” 作为 Entropy Source
+
+```
+
+## 制作镜像
+
+```shell
+#执行下面命令， 看好，最后面有个"."点！
+docker build -t springbootdemo4docker .
+docker build -t springbootdemo4docker:latest .
+```
+
+## 启动容器
+
+```shell
+docker run -d -p 8080:8085 springbootdemo4docke
 ```
 
