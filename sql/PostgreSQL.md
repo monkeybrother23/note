@@ -1,27 +1,81 @@
-# PostgreSQL 12.2
-#表
+# PostgreSql 13.4
+
+## 模式
 
 ```sql
---修改表名 
-ALTER TABLE old_name RENAME new_name;
---添加表列 
-ALTER TABLE sys_menu ADD COLUMN `version` INT ( 5 ) NOT NULL COMMENT '数据版本号';
-ALTER TABLE sys_menu ADD COLUMN `create_time` datetime NOT NULL COMMENT '创建时间';
-ALTER TABLE sys_menu ADD COLUMN `create_by` VARCHAR ( 32 ) NOT NULL COMMENT '创建人';
-ALTER TABLE sys_menu ADD COLUMN `update_time` datetime NOT NULL COMMENT '更新时间';
-ALTER TABLE sys_menu ADD COLUMN `update_by` VARCHAR ( 32 ) NOT NULL COMMENT '更新人';
---删除表列 ALTER TABLE test DROP COLUMN del_name;
---修改表列类型 ALTER TABLE test MODIFY address CHAR (10 )
+-- 创建一个模式
+CREATE SCHEMA myschema;
+-- 删除一个为空的模式（其中的所有对象已经被删除）
+DROP SCHEMA myschema;
+-- 删除一个模式以及其中包含的所有对象：
+DROP SCHEMA myschema CASCADE;
+-- 查询所有模式
+select * from information_schema.schemata;
+
 ```
-# 数据操纵
+
+## 表
+
+### CREATE
+
 ```sql
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric
+CREATE TABLE myschema.company(
+   ID INT PRIMARY KEY     NOT NULL,
+   NAME           TEXT    NOT NULL,
+   AGE            INT     NOT NULL,
+   ADDRESS        CHAR(50),
+   SALARY         REAL
 );
+-- 查看模式下的所有表
+postgres=# \dt myschema.*
+                关联列表
+ 架构模式 |  名称   |  类型  |  拥有者
+----------+---------+--------+----------
+ myschema | company | 数据表 | postgres
+-- 查看表结构
+postgres=# \d myschema.company
+              数据表 "myschema.company"
+  栏位   |     类型      | 校对规则 |  可空的  | 预设
+---------+---------------+----------+----------+------
+ id      | integer       |          | not null |
+ name    | text          |          | not null |
+ age     | integer       |          | not null |
+ address | character(50) |          |          |
+ salary  | real          |          |          |
+索引：
+    "company_pkey" PRIMARY KEY, btree (id)
+-- 修改表名 
+ALTER TABLE old_name RENAME TO new_name;    
 ```
-## 插入数据
+
+### DROP
+
+```sql
+DROP TABLE SCHEMA.table_name;
+-- drop table myschema.company
+```
+
+### COLUMN
+
+```sql
+-- null
+ALTER TABLE "develop"."company"  ALTER COLUMN "address" SET NOT NULL;
+ALTER TABLE "develop"."company"  ALTER COLUMN "address" DROP NOT NULL;
+-- change 数据长度
+ALTER TABLE "develop"."company" 
+  ALTER COLUMN "address" TYPE char(40) COLLATE "pg_catalog"."default";
+-- change 数据类型
+ALTER TABLE "develop"."company" 
+  ALTER COLUMN "age" TYPE char(20) USING "age"::char(20);
+ALTER TABLE "develop"."company" 
+  ALTER COLUMN "age" TYPE int4 USING "age"::int4;
+-- DROP
+ALTER TABLE "develop"."company" 
+  DROP COLUMN "salary";
+```
+
+## INSERT INTO
+
 ```sql
 INSERT INTO products VALUES (1, 'Cheese', 9.99);
 
@@ -36,22 +90,20 @@ INSERT INTO products (product_no, name, price) VALUES
     (3, 'Milk', 2.99);
     
 INSERT INTO products (product_no, name, price)
-  SELECT product_no, name, price FROM new_products
-    WHERE release_date = 'today';
+SELECT product_no, name, price FROM new_products WHERE release_date = 'today';
 ```
-## 更新数据
+## UPDATE
 ```sql
 UPDATE products SET price = 10 WHERE price = 5;
 
 UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
 ```
 
-## 删除数据
+## DELETE
 ```sql
 DELETE FROM products WHERE price = 10;
-
 ```
-## 从修改的行中返回数据
+## RETURNING
 ```sql
 CREATE TABLE users (firstname text, lastname text, id serial primary key);
 
@@ -66,7 +118,7 @@ DELETE FROM products
 WHERE obsoletion_date = 'today'
 RETURNING *;
 ```
-# 数据查询
+## SELECT
 
 ## 连接表
 ```sql
