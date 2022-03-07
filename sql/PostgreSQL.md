@@ -11,7 +11,6 @@ DROP SCHEMA myschema;
 DROP SCHEMA myschema CASCADE;
 -- 查询所有模式
 select * from information_schema.schemata;
-
 ```
 
 ## 表
@@ -73,37 +72,70 @@ ALTER TABLE "develop"."company"
 ALTER TABLE "develop"."company" 
   DROP COLUMN "salary";
 ```
-
-## INSERT INTO
+### INSERT
 
 ```sql
 INSERT INTO products VALUES (1, 'Cheese', 9.99);
 
 INSERT INTO products (product_no, name, price) VALUES (1, 'Cheese', 9.99);
-
-INSERT INTO products (name, price, product_no) VALUES ('Cheese', 9.99, 1);
-
---
+-- 批量操作
 INSERT INTO products (product_no, name, price) VALUES
     (1, 'Cheese', 9.99),
     (2, 'Bread', 1.99),
     (3, 'Milk', 2.99);
-    
+--  INSERT INTO   SELECT
 INSERT INTO products (product_no, name, price)
 SELECT product_no, name, price FROM new_products WHERE release_date = 'today';
 ```
-## UPDATE
+### UPDATE
 ```sql
 UPDATE products SET price = 10 WHERE price = 5;
 
-UPDATE mytable SET a = 5, b = 3, c = 1 WHERE a > 0;
+--
+UPDATE
+    table_name a
+SET
+    a_name = r.map_value
+FROM
+    (
+    SELECT
+        map_key,
+        map_value
+    FROM
+        table_name a) r
+WHERE
+    a.a_key = r.map_key
+--
+UPDATE
+    TABLE_A ccscs
+SET
+    (old_value) =(
+    SELECT
+        a.new_vale
+    FROM
+        temp_data a
+    WHERE
+        ccscs.key = a.key
+    )
+WHERE
+    EXISTS (
+    SELECT
+        1
+    FROM
+         temp_data a
+    WHERE
+        ccscs.key = a.key );  
 ```
 
-## DELETE
+### DELETE
 ```sql
 DELETE FROM products WHERE price = 10;
 ```
-## RETURNING
+### TRUNCATE 
+```sql
+TRUNCATE TABLE  table_name;
+```
+### RETURNING
 ```sql
 CREATE TABLE users (firstname text, lastname text, id serial primary key);
 
@@ -118,28 +150,62 @@ DELETE FROM products
 WHERE obsoletion_date = 'today'
 RETURNING *;
 ```
-## SELECT
+## 查询
 
-## 连接表
+### LIKE
 ```sql
-T1 CROSS JOIN T2 
-即笛卡尔积等效于FROM T1,T2
-INNER JOIN
-对于 T1 的每一行 R1，生成的连接表都有一行对应 T2 中的每一个满足和 R1 的连接条件的行。
-
-LEFT OUTER JOIN
-首先，执行一次内连接。然后，为 T1 中每一个无法在连接条件上匹配 T2 里任何一行的行返回一个连接行，该连接行中 T2 的列用空值补齐。因此，生成的连接表里为来自 T1 的每一行都至少包含一行。
-
-RIGHT OUTER JOIN
-首先，执行一次内连接。然后，为 T2 中每一个无法在连接条件上匹配 T1 里任何一行的行返回一个连接行，该连接行中 T1 的列用空值补齐。因此，生成的连接表里为来自 T2 的每一行都至少包含一行。
-
-FULL OUTER JOIN
-首先，执行一次内连接。然后，为 T1 中每一个无法在连接条件上匹配 T2 里任何一行的行返回一个连接行，该连接行中 T2 的列用空值补齐。同样，为 T2 中每一个无法在连接条件上匹配 T1 里任何一行的行返回一个连接行，该连接行中 T1 的列用空值补齐
+-- 找出 SALARY 字段中以 200 开头的数据
+select * from A
+WHERE SALARY::text LIKE '200%'	
+-- 找出 SALARY 字段中含有 200 字符的数据
+WHERE SALARY::text LIKE '%200%'	
+-- 找出 SALARY 字段中在第二和第三个位置上有 00 的数据
+WHERE SALARY::text LIKE '_00%'	
+-- 找出 SALARY 字段中以 2 开头的字符长度大于 3 的数据
+WHERE SALARY::text LIKE '2_%_%'	
+-- 找出 SALARY 字段中以 2 结尾的数据
+WHERE SALARY::text LIKE '%2'	
+-- 找出 SALARY 字段中 2 在第二个位置上并且以 3 结尾的数据
+WHERE SALARY::text LIKE '_2%3'	
+--找出 SALARY 字段中以 2 开头，3 结尾并且是 5 位数的数据
+WHERE SALARY::text LIKE '2___3'	
 ```
 
-## GROUPING SETS
+### LIMIT 
 ```sql
-=> SELECT * FROM items_sold;
+SELECT column1, column2, columnN 
+FROM table_name
+LIMIT [no of rows] OFFSET [row num]
+-- 读取 4 条数据
+SELECT * FROM COMPANY LIMIT 4;
+-- 从第三位开始提取 3 个记录
+SELECT * FROM COMPANY LIMIT 3 OFFSET 2;
+```
+
+### ORDER 
+```sql
+SELECT column-list
+FROM table_name
+[WHERE condition]
+[ORDER BY column1, column2, .. columnN] [ASC | DESC];
+-- ASC 表示升序，DESC 表示降序
+-- desc nulls first
+-- desc nulls last
+```
+
+### GROUP BY 
+```sql
+SELECT column-list
+FROM table_name
+WHERE [ conditions ]
+GROUP BY column1, column2....columnN
+--
+SELECT NAME, SUM(SALARY) FROM COMPANY GROUP BY NAME;
+```
+
+### GROUPING SETS
+```sql
+SELECT * FROM items_sold;
  brand | size | sales
 -------+------+-------
  Foo   | L    |  10
@@ -148,7 +214,7 @@ FULL OUTER JOIN
  Bar   | L    |  5
 (4 rows)
 
-=> SELECT brand, size, sum(sales) FROM items_sold GROUP BY GROUPING SETS ((brand), (size), ());
+SELECT brand, size, sum(sales) FROM items_sold GROUP BY GROUPING SETS ((brand), (size), ());
  brand | size | sum
 -------+------+-----
  Foo   |      |  30
@@ -158,7 +224,7 @@ FULL OUTER JOIN
        |      |  50
 (5 rows)
 ```
-## ROLLUP
+### ROLLUP
 ```sql
 ROLLUP ( e1, e2, e3, ... )
 表示给定的表达式列表及其所有前缀（包括空列表），因此它等效于
@@ -207,30 +273,53 @@ GROUPING SETS (
     (            )
 )
 ```
-
-
-
-## 组合查询
+### JOIN
 
 ```sql
-query1 UNION [ALL] query2
-query1 INTERSECT [ALL] query2
-query1 EXCEPT [ALL] query2
-```
-## 行排序
+-- 内连接
+SELECT table1.column1, table2.column2...
+FROM table1
+INNER JOIN table2
+ON table1.common_filed = table2.common_field;
+-- 左外连接
+SELECT ... FROM table1 LEFT OUTER JOIN table2 ON conditional_expression ...
 
-```sql
-order
-```
-## LIMIT和OFFSET
-```sql
-SELECT select_list
-    FROM table_expression
-    [ ORDER BY ... ]
-    [ LIMIT { number | ALL } ] [ OFFSET number ]
+-- 右外连接
+SELECT ... FROM table1 RIGHT OUTER JOIN table2 ON conditional_expression ...
+-- 外连接
+SELECT ... FROM table1 FULL OUTER JOIN table2 ON conditional_expression ...
 ```
 
-## VALUES列表
+### UNION
+
+```sql
+SELECT column1 [, column2 ]
+FROM table1 [, table2 ]
+[WHERE condition]
+
+UNION
+
+SELECT column1 [, column2 ]
+FROM table1 [, table2 ]
+[WHERE condition]
+
+--UNION ALL 操作符可以连接两个有重复行的 SELECT 语句
+SELECT column1 [, column2 ]
+FROM table1 [, table2 ]
+[WHERE condition]
+UNION ALL
+SELECT column1 [, column2 ]
+FROM table1 [, table2 ]
+[WHERE condition]
+```
+
+## NULL
+```sql
+select case when coalesce(name,'') = '' then '姓名为空' else name end from student
+
+```
+
+### VALUES
 ```sql
 => SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
  num | letter
@@ -241,8 +330,7 @@ SELECT select_list
 (3 rows)
 ```
 
-
-## 递归查询
+### 递归查询
 ```sql
 CREATE TABLE employees (
    employee_id serial PRIMARY KEY,
@@ -316,32 +404,28 @@ employee_id | manager_id |    full_name
 (10 rows)
 ```
 
-
-
-
-## NULL
-```sql
-select case when coalesce(name,'') = '' then '姓名为空' else name end from student
-```sql
-## 模糊查询
+### 分组查询
 
 ```sql
---查询 hello 开头的数据
-SELECT *
-FROM demo
-WHERE name LIKE 'hello%';
-
---查询以一个任意字符开始然后 end 开头的数据
-SELECT *
-FROM demo
-WHERE name LIKE '_end';
-```
-
-## 分组查询
-
-```sql
---分组查询取第一个
-
+-- desc nulls first
+-- desc nulls last
+select name,score,
+      course,
+      row_number() over(partition by course order by score desc) as rank
+  from jinbo.student;
+ name  | score | course | rank 
+-------+-------+--------+------
+ dock  |   100 |      1 |    1
+ bob   |    90 |      1 |    2
+ cark  |    80 |      1 |    3
+ elic  |    70 |      1 |    4
+ hill  |    60 |      1 |    5
+ alice |    60 |      1 |    6
+ test  |       |      2 |    1
+ iris  |    80 |      2 |    2
+ jacky |    80 |      2 |    3
+ frank |    70 |      2 |    4
+ grace |    50 |      2 |    5
 
 select name,
       score,
@@ -381,37 +465,15 @@ select name,score,
  frank |    70 |      2 |    3
  grace |    50 |      2 |    4
 
-select name,score,
-      course,
-      row_number() over(partition by course order by score desc) as rank
-  from jinbo.student;
- name  | score | course | rank 
--------+-------+--------+------
- dock  |   100 |      1 |    1
- bob   |    90 |      1 |    2
- cark  |    80 |      1 |    3
- elic  |    70 |      1 |    4
- hill  |    60 |      1 |    5
- alice |    60 |      1 |    6
- test  |       |      2 |    1
- iris  |    80 |      2 |    2
- jacky |    80 |      2 |    3
- frank |    70 |      2 |    4
- grace |    50 |      2 |    5
-
-
---rank over(partition by course order by score desc nulls last)
 ```
-UPDATE
-    table_name a
-SET
-    a_name = r.map_value
-FROM
-    (
-    SELECT
-        map_key,
-        map_value
-    FROM
-        table_name a) r
-WHERE
-    a.a_key = r.map_key
+
+### 数字
+```sql
+-- regexp_replace
+SELECT regexp_replace(trim(to_char(num, '999D99')) ,'(?<=\.\d*)0+$|\.0*$','') num,letter
+FROM (VALUES (100.00, 'one'), (100.10, 'two'), (100.11, 'three')) AS t (num,letter);
+
+100	one
+100.1	two
+100.11	three
+```
