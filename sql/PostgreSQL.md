@@ -4,13 +4,13 @@
 
 ```sql
 -- 创建一个模式
-CREATE SCHEMA myschema;
+create schema develop;
 -- 删除一个为空的模式（其中的所有对象已经被删除）
-DROP SCHEMA myschema;
+drop schema develop;
 -- 删除一个模式以及其中包含的所有对象：
-DROP SCHEMA myschema CASCADE;
+drop schema develop cascade;
 -- 查询所有模式
-select * from information_schema.schemata;
+select	* from	information_schema.schemata;
 ```
 
 ## 表
@@ -18,7 +18,7 @@ select * from information_schema.schemata;
 ### CREATE
 
 ```sql
-CREATE TABLE myschema.company(
+CREATE TABLE develop.company(
    ID INT PRIMARY KEY     NOT NULL,
    NAME           TEXT    NOT NULL,
    AGE            INT     NOT NULL,
@@ -26,21 +26,21 @@ CREATE TABLE myschema.company(
    SALARY         REAL
 );
 -- 查看模式下的所有表
-postgres=# \dt myschema.*
+postgres=# \dt develop.*
                 关联列表
  架构模式 |  名称   |  类型  |  拥有者
 ----------+---------+--------+----------
- myschema | company | 数据表 | postgres
+ develop  | company | 数据表 | postgres
+(1 行记录)
 -- 查看表结构
-postgres=# \d myschema.company
-              数据表 "myschema.company"
+postgres=# \d develop.company
+               数据表 "develop.company"
   栏位   |     类型      | 校对规则 |  可空的  | 预设
 ---------+---------------+----------+----------+------
  id      | integer       |          | not null |
  name    | text          |          | not null |
- age     | integer       |          | not null |
- address | character(50) |          |          |
- salary  | real          |          |          |
+ age     | integer       |          |          |
+ address | character(20) |          | not null |
 索引：
     "company_pkey" PRIMARY KEY, btree (id)
 -- 修改表名 
@@ -473,6 +473,7 @@ select name,score,
 SELECT regexp_replace(trim(to_char(num, '999D99')) ,'(?<=\.\d*)0+$|\.0*$','') num,letter
 FROM (VALUES (100.00, 'one'), (100.10, 'two'), (100.11, 'three')) AS t (num,letter);
 
+num	letter
 100	one
 100.1	two
 100.11	three
