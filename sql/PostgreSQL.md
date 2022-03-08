@@ -18,12 +18,14 @@ select	* from	information_schema.schemata;
 ### CREATE
 
 ```sql
-CREATE TABLE develop.company(
-   ID INT PRIMARY KEY     NOT NULL,
-   NAME           TEXT    NOT NULL,
-   AGE            INT     NOT NULL,
-   ADDRESS        CHAR(50),
-   SALARY         REAL
+-- DROP TABLE develop.company;
+
+CREATE TABLE develop.company (
+	id int4 NOT NULL,
+	company_name varchar(20) NOT NULL,
+	age int4 NULL,
+	address varchar(20) NOT NULL,
+	CONSTRAINT company_pkey PRIMARY KEY (id)
 );
 -- 查看模式下的所有表
 postgres=# \dt develop.*
@@ -34,13 +36,13 @@ postgres=# \dt develop.*
 (1 行记录)
 -- 查看表结构
 postgres=# \d develop.company
-               数据表 "develop.company"
-  栏位   |     类型      | 校对规则 |  可空的  | 预设
----------+---------------+----------+----------+------
- id      | integer       |          | not null |
- name    | text          |          | not null |
- age     | integer       |          |          |
- address | character(20) |          | not null |
+                     数据表 "develop.company"
+     栏位     |         类型          | 校对规则 |  可空的  | 预设
+--------------+-----------------------+----------+----------+------
+ id           | integer               |          | not null |
+ company_name | character varying(20) |          | not null |
+ age          | integer               |          |          |
+ address      | character varying(20) |          | not null |
 索引：
     "company_pkey" PRIMARY KEY, btree (id)
 -- 修改表名 
@@ -205,24 +207,26 @@ SELECT NAME, SUM(SALARY) FROM COMPANY GROUP BY NAME;
 
 ### GROUPING SETS
 ```sql
-SELECT * FROM items_sold;
- brand | size | sales
--------+------+-------
- Foo   | L    |  10
- Foo   | M    |  20
- Bar   | M    |  15
- Bar   | L    |  5
-(4 rows)
+SELECT *FROM develop.items_sold is2 ;
 
-SELECT brand, size, sum(sales) FROM items_sold GROUP BY GROUPING SETS ((brand), (size), ());
- brand | size | sum
--------+------+-----
- Foo   |      |  30
- Bar   |      |  20
-       | L    |  15
-       | M    |  35
-       |      |  50
-(5 rows)
+|brand               |sold_size |sales |
+|--------------------|----------|------|
+|Foo                 |L         |10    |
+|Foo                 |M         |20    |
+|Bar                 |M         |15    |
+|Bar                 |L         |5     |
+
+
+SELECT	brand,	sold_size,	SUM(sales)FROM	develop.items_sold is2
+GROUP BY	GROUPING SETS ((brand),	(sold_size),	());
+
+|brand               |sold_size |sum                 |
+|--------------------|----------|--------------------|
+|                    |          |50                  |
+|Foo                 |          |30                  |
+|Bar                 |          |20                  |
+|                    |L         |15                  |
+|                    |M         |35                  |
 ```
 ### ROLLUP
 ```sql
@@ -316,18 +320,17 @@ FROM table1 [, table2 ]
 ## NULL
 ```sql
 select case when coalesce(name,'') = '' then '姓名为空' else name end from student
-
 ```
 
 ### VALUES
 ```sql
-=> SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
- num | letter
------+--------
-   1 | one
-   2 | two
-   3 | three
-(3 rows)
+SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
+|num        |letter                                                                                              |
+|-----------|----------------------------------------------------------------------------------------------------|
+|1          |one                                                                                                 |
+|2          |two                                                                                                 |
+|3          |three                                                                                               |
+
 ```
 
 ### 递归查询
@@ -364,8 +367,6 @@ VALUES
    (18, 'Frank Tucker', 8),
    (19, 'Nathan Ferguson', 8),
    (20, 'Kevin Rampling', 8);
-   
-
 WITH RECURSIVE subordinates AS (
    SELECT
       employee_id,
@@ -387,8 +388,7 @@ WITH RECURSIVE subordinates AS (
    *
 FROM
    subordinates;
-   
-   
+     
 employee_id | manager_id |    full_name
 -------------+------------+-----------------
            2 |          1 | Megan Berry
@@ -401,7 +401,6 @@ employee_id | manager_id |    full_name
           18 |          8 | Frank Tucker
           19 |          8 | Nathan Ferguson
           20 |          8 | Kevin Rampling
-(10 rows)
 ```
 
 ### 分组查询
@@ -470,10 +469,10 @@ select name,score,
 ### 数字
 ```sql
 -- regexp_replace
-SELECT regexp_replace(trim(to_char(num, '999D99')) ,'(?<=\.\d*)0+$|\.0*$','') num,letter
-FROM (VALUES (100.00, 'one'), (100.10, 'two'), (100.11, 'three')) AS t (num,letter);
+SELECT
+	REGEXP_REPLACE(TRIM(TO_CHAR(num, '999D99')) , '(?<=\.\d*)0+$|\.0*$', '') num,letter
+FROM	(VALUES (100.00,'one'),(100.10,'two'),(100.11,'three')) AS t (num,letter);
 
-num	letter
 100	one
 100.1	two
 100.11	three
