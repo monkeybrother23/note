@@ -143,7 +143,6 @@ CREATE TABLE users (firstname text, lastname text, id serial primary key);
 
 INSERT INTO users (firstname, lastname) VALUES ('Joe', 'Cool') RETURNING id;
 
-
 UPDATE products SET price = price * 1.10
 WHERE price <= 99.99
 RETURNING name, price AS new_price;
@@ -207,19 +206,21 @@ SELECT NAME, SUM(SALARY) FROM COMPANY GROUP BY NAME;
 
 ### GROUPING SETS
 ```sql
-SELECT *FROM develop.items_sold is2 ;
+INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Foo', 'L', 10);
+INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Foo', 'M', 20);
+INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Bar', 'M', 15);
+INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Bar', 'L', 5);
 
-|brand               |sold_size |sales |
-|--------------------|----------|------|
-|Foo                 |L         |10    |
-|Foo                 |M         |20    |
-|Bar                 |M         |15    |
-|Bar                 |L         |5     |
-
-
-SELECT	brand,	sold_size,	SUM(sales)FROM	develop.items_sold is2
-GROUP BY	GROUPING SETS ((brand),	(sold_size),	());
-
+SELECT
+	brand,
+	sold_size,
+	SUM(sales)
+FROM
+	develop.items_sold is2
+GROUP BY
+	GROUPING SETS ((brand),
+	(sold_size),
+	());
 |brand               |sold_size |sum                 |
 |--------------------|----------|--------------------|
 |                    |          |50                  |
@@ -251,7 +252,7 @@ GROUPING SETS (
 )
 ```
 
-## CUBE 
+### CUBE 
 ```sql
 CUBE ( a, b, c )
 表示给定的列表及其可能的子集（即幂集）。因此
@@ -317,30 +318,27 @@ FROM table1 [, table2 ]
 [WHERE condition]
 ```
 
-## NULL
+### NULL
 ```sql
-select case when coalesce(name,'') = '' then '姓名为空' else name end from student
+SELECT COALESCE (NULL ,'Y') a,COALESCE ('N' ,'Y') b;
 ```
 
 ### VALUES
+
 ```sql
 SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
-|num        |letter                                                                                              |
-|-----------|----------------------------------------------------------------------------------------------------|
-|1          |one                                                                                                 |
-|2          |two                                                                                                 |
-|3          |three                                                                                               |
-
 ```
 
 ### 递归查询
 ```sql
-CREATE TABLE employees (
-   employee_id serial PRIMARY KEY,
-   full_name VARCHAR NOT NULL,
-   manager_id INT
+-- DROP TABLE develop.employees;
+CREATE TABLE develop.employees (
+	employee_id int2 NOT NULL,
+	full_name varchar NOT NULL,
+	manager_id int4 NULL,
+	CONSTRAINT employees_pkey PRIMARY KEY (employee_id)
 );
-
+-- INSER
 INSERT INTO employees (
    employee_id,
    full_name,
@@ -367,102 +365,129 @@ VALUES
    (18, 'Frank Tucker', 8),
    (19, 'Nathan Ferguson', 8),
    (20, 'Kevin Rampling', 8);
+-- SELECT
 WITH RECURSIVE subordinates AS (
-   SELECT
-      employee_id,
-      manager_id,
-      full_name
-   FROM
-      employees
-   WHERE
-      employee_id = 2
-   UNION
-      SELECT
-         e.employee_id,
-         e.manager_id,
-         e.full_name
-      FROM
-         employees e
-      INNER JOIN subordinates s ON s.employee_id = e.manager_id
-) SELECT
-   *
+SELECT
+	a.employee_id,
+	a.full_name,
+	a.manager_id
 FROM
-   subordinates;
+	employees a
+WHERE
+	a.employee_id = 1
+UNION
+SELECT
+	e.employee_id,
+	e.full_name,
+	e.manager_id
+FROM
+	employees e
+INNER JOIN subordinates s ON
+	s.employee_id = e.manager_id )
+SELECT
+	*
+FROM
+	subordinates;
      
-employee_id | manager_id |    full_name
--------------+------------+-----------------
-           2 |          1 | Megan Berry
-           6 |          2 | Bella Tucker
-           7 |          2 | Ryan Metcalfe
-           8 |          2 | Max Mills
-           9 |          2 | Benjamin Glover
-          16 |          7 | Piers Paige
-          17 |          7 | Ryan Henderson
-          18 |          8 | Frank Tucker
-          19 |          8 | Nathan Ferguson
-          20 |          8 | Kevin Rampling
+|employee_id|full_name           |manager_id |
+|-----------|--------------------|-----------|
+|1          |Michael North       |           |
+|2          |Megan Berry         |1          |
+|3          |Sarah Berry         |1          |
+|4          |Zoe Black           |1          |
+|5          |Tim James           |1          |
+|6          |Bella Tucker        |2          |
+|7          |Ryan Metcalfe       |2          |
+|8          |Max Mills           |2          |
+|9          |Benjamin Glover     |2          |
+|10         |Carolyn Henderson   |3          |
+|11         |Nicola Kelly        |3          |
+|12         |Alexandra Climo     |3          |
+|13         |Dominic King        |3          |
+|14         |Leonard Gray        |4          |
+|15         |Eric Rampling       |4          |
+|16         |Piers Paige         |7          |
+|17         |Ryan Henderson      |7          |
+|18         |Frank Tucker        |8          |
+|19         |Nathan Ferguson     |8          |
+|20         |Kevin Rampling      |8          |
 ```
 
 ### 分组查询
 
 ```sql
+-- DROP TABLE develop.student;
+CREATE TABLE develop.student (
+	student_name varchar(20) NOT NULL,
+	score int2 NOT NULL,
+	course int2 NULL
+);
+
 -- desc nulls first
 -- desc nulls last
-select name,score,
-      course,
-      row_number() over(partition by course order by score desc) as rank
-  from jinbo.student;
- name  | score | course | rank 
--------+-------+--------+------
- dock  |   100 |      1 |    1
- bob   |    90 |      1 |    2
- cark  |    80 |      1 |    3
- elic  |    70 |      1 |    4
- hill  |    60 |      1 |    5
- alice |    60 |      1 |    6
- test  |       |      2 |    1
- iris  |    80 |      2 |    2
- jacky |    80 |      2 |    3
- frank |    70 |      2 |    4
- grace |    50 |      2 |    5
+SELECT
+	student_name ,
+	score,
+	course,
+	ROW_NUMBER() OVER(PARTITION BY course
+ORDER BY
+	score DESC NULLS LAST) AS RANK
+FROM
+	develop.student;	
+|student_name        |score |course|rank                |
+|--------------------|------|------|--------------------|
+|A                   |100   |1     |1                   |
+|C                   |70    |1     |2                   |
+|B                   |70    |1     |3                   |
+|H                   |60    |1     |4                   |
+|D                   |50    |1     |5                   |
+|G                   |80    |2     |1                   |
+|F                   |70    |2     |2                   |
+|E                   |      |2     |3                   |
 
-select name,
-      score,
-      course,
-      rank() over(partition by course order by score desc) as rank
-  from jinbo.student;
---rank over () 可以把成绩相同的两名是并列，如下course = 2 的结果rank值为：1 2 2 4 5
- name  | score | course | rank 
--------+-------+--------+------
- dock  |   100 |      1 |    1
- bob   |    90 |      1 |    2
- cark  |    80 |      1 |    3
- elic  |    70 |      1 |    4
- hill  |    60 |      1 |    5
- alice |    60 |      1 |    5
- test  |       |      2 |    1
- iris  |    80 |      2 |    2
- jacky |    80 |      2 |    2
- frank |    70 |      2 |    4
- grace |    50 |      2 |    5
---dense_rank()和rank over()很相似，可以把学生成绩并列不间断顺序排名，如下course = 2 的结果rank值为：1 2 2 3 4
-select name,score,
-      course,
-      dense_rank() over(partition by course order by score desc) as rank
-  from jinbo.student;
- name  | score | course | rank 
--------+-------+--------+------
- dock  |   100 |      1 |    1
- bob   |    90 |      1 |    2
- cark  |    80 |      1 |    3
- elic  |    70 |      1 |    4
- hill  |    60 |      1 |    5
- alice |    60 |      1 |    5
- test  |       |      2 |    1
- iris  |    80 |      2 |    2
- jacky |    80 |      2 |    2
- frank |    70 |      2 |    3
- grace |    50 |      2 |    4
+SELECT
+	student_name ,
+	score,
+	course,
+	RANK() OVER(PARTITION BY course
+ORDER BY
+	score DESC NULLS LAST) AS RANK
+FROM
+	develop.student;
+--rank over () 可以把成绩相同的两名是并列，如下course = 1 的结果rank值为：1 2 2 4 5
+|student_name        |score |course|rank                |
+|--------------------|------|------|--------------------|
+|A                   |100   |1     |1                   |
+|C                   |70    |1     |2                   |
+|B                   |70    |1     |2                   |
+|H                   |60    |1     |4                   |
+|D                   |50    |1     |5                   |
+|G                   |80    |2     |1                   |
+|F                   |70    |2     |2                   |
+|E                   |      |2     |3                   |
+
+
+--dense_rank()和rank over()很相似，可以把学生成绩并列不间断顺序排名，如下course = 1 的结果rank值为：1 2 2 3 4
+SELECT
+	student_name ,
+	score,
+	course,
+	DENSE_RANK() OVER(PARTITION BY course
+ORDER BY
+	score DESC NULLS LAST) AS RANK
+FROM
+	develop.student;
+|student_name        |score |course|rank                |
+|--------------------|------|------|--------------------|
+|A                   |100   |1     |1                   |
+|C                   |70    |1     |2                   |
+|B                   |70    |1     |2                   |
+|H                   |60    |1     |3                   |
+|D                   |50    |1     |4                   |
+|G                   |80    |2     |1                   |
+|F                   |70    |2     |2                   |
+|E                   |      |2     |3                   |
+
 
 ```
 
@@ -477,3 +502,5 @@ FROM	(VALUES (100.00,'one'),(100.10,'two'),(100.11,'three')) AS t (num,letter);
 100.1	two
 100.11	three
 ```
+
+## 索引
