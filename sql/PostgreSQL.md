@@ -504,3 +504,54 @@ FROM	(VALUES (100.00,'one'),(100.10,'two'),(100.11,'three')) AS t (num,letter);
 ```
 
 ## 索引
+
+### 索引类型
+
+#### 单一索引
+
+```sql
+CREATE INDEX index_name ON table_name (column_name);
+```
+
+#### 组合索引
+
+```sql
+CREATE INDEX index_name ON table_name (column1_name, column2_name);
+```
+
+#### 唯一索引
+
+```sql
+CREATE UNIQUE INDEX index_name on table_name (column_name);
+```
+
+#### 隐式索引
+
+```sql
+-- 隐式索引 是在创建对象时，由数据库服务器自动创建的索引。索引自动创建为主键约束和唯一约束
+```
+
+### USING
+
+#### BTREE
+
+```sql
+CREATE INDEX name ON table USING BTREE (column);
+-- 每种索引类型都有其适合的查询类型，缺省时，CREATE INDEX命令将创建B-Tree索引。
+CREATE INDEX index_name ON table_name (column1_name, column2_name);
+```
+
+#### hash
+
+```sql
+-- USING hash
+CREATE INDEX name ON table USING hash (column);
+```
+
+### DROP
+
+```sql
+-- DROP INDEX
+DROP INDEX index_name;
+```
+
