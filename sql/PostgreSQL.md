@@ -554,4 +554,7 @@ CREATE INDEX name ON table USING hash (column);
 -- DROP INDEX
 DROP INDEX index_name;
 ```
-
+### INDEX查询
+```sql
+SELECT * FROM pg_catalog.pg_indexes WHERE  tablename ='table_name';
+```
