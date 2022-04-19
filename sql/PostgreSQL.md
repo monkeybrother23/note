@@ -487,8 +487,6 @@ FROM
 |G                   |80    |2     |1                   |
 |F                   |70    |2     |2                   |
 |E                   |      |2     |3                   |
-
-
 ```
 
 ### 数字
@@ -497,11 +495,13 @@ FROM
 SELECT
 	REGEXP_REPLACE(TRIM(TO_CHAR(num, '999D99')) , '(?<=\.\d*)0+$|\.0*$', '') num,letter
 FROM	(VALUES (100.00,'one'),(100.10,'two'),(100.11,'three')) AS t (num,letter);
-
-100	one
-100.1	two
-100.11	three
 ```
+
+| num    | letter |
+| ------ | ------ |
+| 100    | one    |
+| 100.1  | two    |
+| 100.11 | three  |
 
 ## 索引
 
@@ -554,7 +554,49 @@ CREATE INDEX name ON table USING hash (column);
 -- DROP INDEX
 DROP INDEX index_name;
 ```
-### INDEX查询
+## pg_catalog
+
+### 索引
+
 ```sql
 SELECT * FROM pg_catalog.pg_indexes WHERE  tablename ='table_name';
 ```
+
+| schemaname | tablename | indexname      | tablespace | indexdef                                                     |
+| ---------- | --------- | -------------- | ---------- | ------------------------------------------------------------ |
+| develop    | employees | employees_pkey |            | CREATE UNIQUE INDEX employees_pkey ON develop.employees USING btree (employee_id) |
+
+### 表结构
+
+```sql
+SELECT
+	pc.relname table_name,
+	pt.typname typname,
+	pa.attnum,
+	pa.attname column_name,
+	pa.attlen column_length,
+	pa.atttypmod lengthvar,
+	pa.attnotnull canNull,
+	pd.description column_comment
+FROM
+	pg_catalog.pg_class pc,
+	pg_catalog.pg_type pt ,
+	pg_catalog.pg_attribute pa
+LEFT OUTER JOIN pg_catalog.pg_description pd ON
+	pa.attrelid = pd.objoid
+	AND pa.attnum = pd.objsubid
+WHERE
+	pc.oid = pa.attrelid
+	AND pa.atttypid = pt.oid
+	AND pa.attnum > 0
+	AND pc.relname = 'table_name'
+ORDER BY
+	pa.attnum;
+```
+
+| table_name | typname | attnum | column_name | column_length | lengthvar | cannull | column_comment |
+| ---------- | ------- | ------ | ----------- | ------------- | --------- | ------- | -------------- |
+| employees  | int2    | 1      | employee_id | 2             | -1        | true    | 员工id         |
+| employees  | varchar | 2      | full_name   | -1            | 24        | true    | 名字           |
+| employees  | int4    | 3      | manager_id  | 4             | -1        | false   | 管理员id       |
+
