@@ -13,7 +13,7 @@ drop schema develop cascade;
 select	* from	information_schema.schemata;
 ```
 
-## 表
+## TABLE
 
 ### CREATE
 
@@ -49,6 +49,40 @@ postgres=# \d develop.company
 ALTER TABLE old_name RENAME TO new_name;    
 ```
 
+### 表结构
+
+```sql
+SELECT
+	pc.relname table_name,
+	pt.typname typname,
+	pa.attnum,
+	pa.attname column_name,
+	pa.attlen column_length,
+	pa.atttypmod lengthvar,
+	pa.attnotnull canNull,
+	pd.description column_comment
+FROM
+	pg_catalog.pg_class pc,
+	pg_catalog.pg_type pt ,
+	pg_catalog.pg_attribute pa
+LEFT OUTER JOIN pg_catalog.pg_description pd ON
+	pa.attrelid = pd.objoid
+	AND pa.attnum = pd.objsubid
+WHERE
+	pc.oid = pa.attrelid
+	AND pa.atttypid = pt.oid
+	AND pa.attnum > 0
+	AND pc.relname = 'table_name'
+ORDER BY
+	pa.attnum;
+```
+
+| table_name | typname | attnum | column_name | column_length | lengthvar | cannull | column_comment |
+| ---------- | ------- | ------ | ----------- | ------------- | --------- | ------- | -------------- |
+| employees  | int2    | 1      | employee_id | 2             | -1        | true    | 员工id         |
+| employees  | varchar | 2      | full_name   | -1            | 24        | true    | 名字           |
+| employees  | int4    | 3      | manager_id  | 4             | -1        | false   | 管理员id       |
+
 ### DROP
 
 ```sql
@@ -58,10 +92,16 @@ DROP TABLE SCHEMA.table_name;
 
 ### COLUMN
 
+#### NULL
+
 ```sql
--- null
 ALTER TABLE "develop"."company"  ALTER COLUMN "address" SET NOT NULL;
 ALTER TABLE "develop"."company"  ALTER COLUMN "address" DROP NOT NULL;
+```
+
+#### TYPE
+
+```sql
 -- change 数据长度
 ALTER TABLE "develop"."company" 
   ALTER COLUMN "address" TYPE char(40) COLLATE "pg_catalog"."default";
@@ -70,10 +110,20 @@ ALTER TABLE "develop"."company"
   ALTER COLUMN "age" TYPE char(20) USING "age"::char(20);
 ALTER TABLE "develop"."company" 
   ALTER COLUMN "age" TYPE int4 USING "age"::int4;
--- DROP
+```
+#### COMMENT 
+
+```sql
+COMMENT ON COLUMN develop.employees.full_name  IS '员工名字';
+```
+
+#### DROP
+
+```sql
 ALTER TABLE "develop"."company" 
   DROP COLUMN "salary";
 ```
+
 ### INSERT
 
 ```sql
@@ -92,7 +142,6 @@ SELECT product_no, name, price FROM new_products WHERE release_date = 'today';
 ### UPDATE
 ```sql
 UPDATE products SET price = 10 WHERE price = 5;
-
 --
 UPDATE
     table_name a
@@ -206,11 +255,10 @@ SELECT NAME, SUM(SALARY) FROM COMPANY GROUP BY NAME;
 
 ### GROUPING SETS
 ```sql
-INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Foo', 'L', 10);
-INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Foo', 'M', 20);
-INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Bar', 'M', 15);
-INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Bar', 'L', 5);
-
+-- INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Foo', 'L', 10);
+-- INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Foo', 'M', 20);
+-- INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Bar', 'M', 15);
+-- INSERT INTO develop.items_sold (brand, sold_size, sales) VALUES('Bar', 'L', 5);
 SELECT
 	brand,
 	sold_size,
@@ -221,15 +269,17 @@ GROUP BY
 	GROUPING SETS ((brand),
 	(sold_size),
 	());
-|brand               |sold_size |sum                 |
-|--------------------|----------|--------------------|
-|                    |          |50                  |
-|Foo                 |          |30                  |
-|Bar                 |          |20                  |
-|                    |L         |15                  |
-|                    |M         |35                  |
 ```
+| brand | sold_size | sum  |
+| ----- | --------- | ---- |
+|       |           | 50   |
+| Foo   |           | 30   |
+| Bar   |           | 20   |
+|       | L         | 15   |
+|       | M         | 35   |
+
 ### ROLLUP
+
 ```sql
 ROLLUP ( e1, e2, e3, ... )
 表示给定的表达式列表及其所有前缀（包括空列表），因此它等效于
@@ -241,9 +291,7 @@ GROUPING SETS (
     ( )
 )
 
-
 ROLLUP ( a, (b, c), d )
-
 GROUPING SETS (
     ( a, b, c, d ),
     ( a, b, c    ),
@@ -267,10 +315,7 @@ GROUPING SETS (
     (         )
 )
 
-
 CUBE ( (a, b), (c, d) )
-
-
 GROUPING SETS (
     ( a, b, c, d ),
     ( a, b       ),
@@ -288,7 +333,6 @@ INNER JOIN table2
 ON table1.common_filed = table2.common_field;
 -- 左外连接
 SELECT ... FROM table1 LEFT OUTER JOIN table2 ON conditional_expression ...
-
 -- 右外连接
 SELECT ... FROM table1 RIGHT OUTER JOIN table2 ON conditional_expression ...
 -- 外连接
@@ -308,7 +352,7 @@ SELECT column1 [, column2 ]
 FROM table1 [, table2 ]
 [WHERE condition]
 
---UNION ALL 操作符可以连接两个有重复行的 SELECT 语句
+-- UNION ALL 操作符可以连接两个有重复行的 SELECT 语句
 SELECT column1 [, column2 ]
 FROM table1 [, table2 ]
 [WHERE condition]
@@ -388,30 +432,30 @@ SELECT
 	*
 FROM
 	subordinates;
-     
-|employee_id|full_name           |manager_id |
-|-----------|--------------------|-----------|
-|1          |Michael North       |           |
-|2          |Megan Berry         |1          |
-|3          |Sarah Berry         |1          |
-|4          |Zoe Black           |1          |
-|5          |Tim James           |1          |
-|6          |Bella Tucker        |2          |
-|7          |Ryan Metcalfe       |2          |
-|8          |Max Mills           |2          |
-|9          |Benjamin Glover     |2          |
-|10         |Carolyn Henderson   |3          |
-|11         |Nicola Kelly        |3          |
-|12         |Alexandra Climo     |3          |
-|13         |Dominic King        |3          |
-|14         |Leonard Gray        |4          |
-|15         |Eric Rampling       |4          |
-|16         |Piers Paige         |7          |
-|17         |Ryan Henderson      |7          |
-|18         |Frank Tucker        |8          |
-|19         |Nathan Ferguson     |8          |
-|20         |Kevin Rampling      |8          |
 ```
+
+| employee_id | full_name         | manager_id |
+| ----------- | ----------------- | ---------- |
+| 1           | Michael North     |            |
+| 2           | Megan Berry       | 1          |
+| 3           | Sarah Berry       | 1          |
+| 4           | Zoe Black         | 1          |
+| 5           | Tim James         | 1          |
+| 6           | Bella Tucker      | 2          |
+| 7           | Ryan Metcalfe     | 2          |
+| 8           | Max Mills         | 2          |
+| 9           | Benjamin Glover   | 2          |
+| 10          | Carolyn Henderson | 3          |
+| 11          | Nicola Kelly      | 3          |
+| 12          | Alexandra Climo   | 3          |
+| 13          | Dominic King      | 3          |
+| 14          | Leonard Gray      | 4          |
+| 15          | Eric Rampling     | 4          |
+| 16          | Piers Paige       | 7          |
+| 17          | Ryan Henderson    | 7          |
+| 18          | Frank Tucker      | 8          |
+| 19          | Nathan Ferguson   | 8          |
+| 20          | Kevin Rampling    | 8          |
 
 ### 分组查询
 
@@ -422,9 +466,13 @@ CREATE TABLE develop.student (
 	score int2 NOT NULL,
 	course int2 NULL
 );
-
 -- desc nulls first
 -- desc nulls last
+```
+
+#### ROW_NUMBER
+
+```sql
 SELECT
 	student_name ,
 	score,
@@ -434,17 +482,22 @@ ORDER BY
 	score DESC NULLS LAST) AS RANK
 FROM
 	develop.student;	
-|student_name        |score |course|rank                |
-|--------------------|------|------|--------------------|
-|A                   |100   |1     |1                   |
-|C                   |70    |1     |2                   |
-|B                   |70    |1     |3                   |
-|H                   |60    |1     |4                   |
-|D                   |50    |1     |5                   |
-|G                   |80    |2     |1                   |
-|F                   |70    |2     |2                   |
-|E                   |      |2     |3                   |
+```
 
+| student_name | score | course | rank |
+| ------------ | ----- | ------ | ---- |
+| A            | 100   | 1      | 1    |
+| C            | 70    | 1      | 2    |
+| B            | 70    | 1      | 3    |
+| H            | 60    | 1      | 4    |
+| D            | 50    | 1      | 5    |
+| G            | 80    | 2      | 1    |
+| F            | 70    | 2      | 2    |
+| E            |       | 2      | 3    |
+
+#### RANK
+
+```sql
 SELECT
 	student_name ,
 	score,
@@ -455,18 +508,22 @@ ORDER BY
 FROM
 	develop.student;
 --rank over () 可以把成绩相同的两名是并列，如下course = 1 的结果rank值为：1 2 2 4 5
-|student_name        |score |course|rank                |
-|--------------------|------|------|--------------------|
-|A                   |100   |1     |1                   |
-|C                   |70    |1     |2                   |
-|B                   |70    |1     |2                   |
-|H                   |60    |1     |4                   |
-|D                   |50    |1     |5                   |
-|G                   |80    |2     |1                   |
-|F                   |70    |2     |2                   |
-|E                   |      |2     |3                   |
+```
 
+| student_name | score | course | rank |
+| ------------ | ----- | ------ | ---- |
+| A            | 100   | 1      | 1    |
+| C            | 70    | 1      | 2    |
+| B            | 70    | 1      | 2    |
+| H            | 60    | 1      | 4    |
+| D            | 50    | 1      | 5    |
+| G            | 80    | 2      | 1    |
+| F            | 70    | 2      | 2    |
+| E            |       | 2      | 3    |
 
+#### DENSE_RANK
+
+```sql
 --dense_rank()和rank over()很相似，可以把学生成绩并列不间断顺序排名，如下course = 1 的结果rank值为：1 2 2 3 4
 SELECT
 	student_name ,
@@ -477,19 +534,21 @@ ORDER BY
 	score DESC NULLS LAST) AS RANK
 FROM
 	develop.student;
-|student_name        |score |course|rank                |
-|--------------------|------|------|--------------------|
-|A                   |100   |1     |1                   |
-|C                   |70    |1     |2                   |
-|B                   |70    |1     |2                   |
-|H                   |60    |1     |3                   |
-|D                   |50    |1     |4                   |
-|G                   |80    |2     |1                   |
-|F                   |70    |2     |2                   |
-|E                   |      |2     |3                   |
 ```
 
+| student_name | score | course | rank |
+| ------------ | ----- | ------ | ---- |
+| A            | 100   | 1      | 1    |
+| C            | 70    | 1      | 2    |
+| B            | 70    | 1      | 2    |
+| H            | 60    | 1      | 3    |
+| D            | 50    | 1      | 4    |
+| G            | 80    | 2      | 1    |
+| F            | 70    | 2      | 2    |
+| E            |       | 2      | 3    |
+
 ### 数字
+
 ```sql
 -- regexp_replace
 SELECT
@@ -554,9 +613,7 @@ CREATE INDEX name ON table USING hash (column);
 -- DROP INDEX
 DROP INDEX index_name;
 ```
-## pg_catalog
-
-### 索引
+### 查询索引
 
 ```sql
 SELECT * FROM pg_catalog.pg_indexes WHERE  tablename ='table_name';
@@ -566,37 +623,5 @@ SELECT * FROM pg_catalog.pg_indexes WHERE  tablename ='table_name';
 | ---------- | --------- | -------------- | ---------- | ------------------------------------------------------------ |
 | develop    | employees | employees_pkey |            | CREATE UNIQUE INDEX employees_pkey ON develop.employees USING btree (employee_id) |
 
-### 表结构
-
-```sql
-SELECT
-	pc.relname table_name,
-	pt.typname typname,
-	pa.attnum,
-	pa.attname column_name,
-	pa.attlen column_length,
-	pa.atttypmod lengthvar,
-	pa.attnotnull canNull,
-	pd.description column_comment
-FROM
-	pg_catalog.pg_class pc,
-	pg_catalog.pg_type pt ,
-	pg_catalog.pg_attribute pa
-LEFT OUTER JOIN pg_catalog.pg_description pd ON
-	pa.attrelid = pd.objoid
-	AND pa.attnum = pd.objsubid
-WHERE
-	pc.oid = pa.attrelid
-	AND pa.atttypid = pt.oid
-	AND pa.attnum > 0
-	AND pc.relname = 'table_name'
-ORDER BY
-	pa.attnum;
-```
-
-| table_name | typname | attnum | column_name | column_length | lengthvar | cannull | column_comment |
-| ---------- | ------- | ------ | ----------- | ------------- | --------- | ------- | -------------- |
-| employees  | int2    | 1      | employee_id | 2             | -1        | true    | 员工id         |
-| employees  | varchar | 2      | full_name   | -1            | 24        | true    | 名字           |
-| employees  | int4    | 3      | manager_id  | 4             | -1        | false   | 管理员id       |
+### 
 
