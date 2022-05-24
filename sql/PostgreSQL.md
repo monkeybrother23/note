@@ -175,7 +175,17 @@ WHERE
     FROM
          temp_data a
     WHERE
-        ccscs.key = a.key );  
+        ccscs.key = a.key );
+UPDATE
+    test
+SET
+    info = tmp.info
+FROM
+    (
+VALUES (1,'new1'),(2,'new2'),(6,'new6')) 
+AS tmp (id,info)
+WHERE
+    test.id = tmp.id;    
 ```
 
 ### DELETE
